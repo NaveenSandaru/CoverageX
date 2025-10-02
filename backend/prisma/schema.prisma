@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model clients {
+  email           String  @id
+  name            String
+  phone_number    String
+  profile_picture String?
+  age             Int?
+  gender          String? @db.Char(1)
+  address         String?
+  password        String
+
+  appointments            appointments[]
+  appointment_history     appointment_history[]
+  client_user_questions   client_user_questions[]
+  email_verification     email_verification?
+  ratings                 ratings[]
+  reviews                 reviews[]
+}
+
+model service_providers {
+  email               String  @id
+  name                String
+  company_phone_number String
+  profile_picture     String?
+  company_address     String?
+  password            String
+  language            String
+  service_type        String
+  specialization      String?
+  work_days_from      String
+  work_days_to        String
+  work_hours_from     String
+  work_hours_to       String
+  appointment_duration String
+  appointment_fee      Int
+  company_name        String
+
+  appointments                appointments[]
+  appointment_history         appointment_history[]
+  service_provider_questions  service_provider_questions[]
+  service_provider_email_verification service_provider_email_verification?
+  ratings                     ratings[]
+  reviews                     reviews[]
+}
+
+model services {
+  service_id  String @id @default(uuid())
+  service     String
+  picture     String?  // Optional: use '?' if picture is not always provided
+  description String?  // Optional: use '?' if description is not always provided
+}
+
+
+
+model email_verification {
+  email String @id
+  code  String?
+
+  clients clients @relation(fields: [email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model service_provider_email_verification {
+  email String @id
+  code  String?
+
+  service_providers service_providers @relation(fields: [email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model security_questions {
+  question_id String @id
+  question    String
+
+  client_user_questions         client_user_questions[]
+  service_provider_questions    service_provider_questions[]
+}
+
+model client_user_questions {
+  email       String
+  question_id String
+  answer      String
+
+  clients           clients           @relation(fields: [email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  security_questions security_questions @relation(fields: [question_id], references: [question_id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([email, question_id])
+}
+
+model service_provider_questions {
+  email       String
+  question_id String
+  answer      String
+
+  service_providers   service_providers   @relation(fields: [email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  security_questions  security_questions  @relation(fields: [question_id], references: [question_id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([email, question_id])
+}
+
+model admins {
+  id       String @id
+  password String
+  name String
+}
+
+model appointments {
+  appointment_id         String   @id @default(cuid())
+  client_email           String?
+  service_provider_email String
+  date                   String
+  time_from              String
+  time_to                String
+  note                   String?
+
+  clients           clients?           @relation(fields: [client_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  service_providers service_providers @relation(fields: [service_provider_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model appointment_history {
+  history_id             String   @id
+  client_email           String
+  service_provider_email String
+  date_and_time          String
+  status                 String
+
+  clients           clients           @relation(fields: [client_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  service_providers service_providers @relation(fields: [service_provider_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  ratings           ratings[]
+  reviews           reviews[]
+}
+
+model ratings {
+  client_email           String
+  service_provider_email String
+  history_id             String
+  rating                 Float
+
+  clients           clients           @relation(fields: [client_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  service_providers service_providers @relation(fields: [service_provider_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  appointment_history appointment_history @relation(fields: [history_id], references: [history_id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([client_email, service_provider_email, history_id])
+}
+
+model reviews {
+  client_email           String
+  service_provider_email String
+  history_id             String
+  review                 String
+
+  clients           clients           @relation(fields: [client_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  service_providers service_providers @relation(fields: [service_provider_email], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  appointment_history appointment_history @relation(fields: [history_id], references: [history_id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([client_email, service_provider_email, history_id])
+}
