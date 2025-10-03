@@ -6,13 +6,42 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    const tasks = await prisma.tasks.findMany({
-      include: { user: { select: { user_id: true, email: true, first_name: true, last_name: true } } },
-    });
+    const tasks = await prisma.tasks.findMany();
     res.json(tasks);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/:page', async (req, res) => {
+  try {
+    const page = Number(req.params.page) || 1;
+    const pageSize = 5;
+
+    const totalTasks = await prisma.tasks.count();
+
+    const tasks = await prisma.tasks.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: [
+        { deadline: 'asc' },
+        { created: 'asc' }
+      ],
+    });
+
+    res.json({
+      tasks,
+      info: {
+        total: totalTasks,
+        page,
+        pageSize,
+        totalPages: Math.ceil(totalTasks / pageSize),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

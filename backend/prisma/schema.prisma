@@ -7,30 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model users {
-  user_id    String   @id @default(uuid()) @db.Uuid
-  email      String   @unique
-  first_name String
-  last_name  String
-  password   String
-  tasks      tasks[]  @relation("userTasks")
-
-  @@map("users")
-  @@index([email], name: "idx_users_email")
-}
-
 model tasks {
   task_id          Int      @id @default(autoincrement())
-  user_id          String   @db.Uuid
   task_title       String
   task_description String
   deadline         DateTime
   created          DateTime @default(now())
   finished         Boolean  @default(false)
-  user             users    @relation("userTasks", fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("tasks")
-  @@index([user_id], name: "idx_tasks_user_id")
   @@index([deadline], name: "idx_tasks_deadline")
   @@index([finished], name: "idx_tasks_finished")
 }
