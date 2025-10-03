@@ -16,13 +16,13 @@ router.get('/', async (req, res) => {
 
 router.get('/:page', async (req, res) => {
   try {
-    const page = Number(req.params.page) || 1;
+    const page = Number(req.params.page) || 0;
     const pageSize = 5;
 
     const totalTasks = await prisma.tasks.count();
 
     const tasks = await prisma.tasks.findMany({
-      skip: (page - 1) * pageSize,
+      skip: page * pageSize,
       take: pageSize,
       orderBy: [
         { deadline: 'asc' },
@@ -55,7 +55,6 @@ router.post('/', async (req, res) => {
 
     const newTask = await prisma.tasks.create({
       data: {
-        user_id: req.user.user_id,
         task_title,
         task_description,
         deadline: new Date(deadline),
@@ -75,8 +74,8 @@ router.put('/:task_id', async (req, res) => {
     const { task_title, task_description, deadline, finished } = req.body;
 
     const existingTask = await prisma.tasks.findUnique({ where: { task_id: Number(task_id) } });
-    if (!existingTask || existingTask.user_id !== req.user.user_id) {
-      return res.status(403).json({ message: 'Not authorized to update this task' });
+    if (!existingTask) {
+      return res.status(403).json({ message: 'task not found ' });
     }
 
     const updatedTask = await prisma.tasks.update({
@@ -101,8 +100,8 @@ router.delete('/:task_id', async (req, res) => {
     const { task_id } = req.params;
 
     const existingTask = await prisma.tasks.findUnique({ where: { task_id: Number(task_id) } });
-    if (!existingTask || existingTask.user_id !== req.user.user_id) {
-      return res.status(403).json({ message: 'Not authorized to delete this task' });
+    if (!existingTask) {
+      return res.status(403).json({ message: 'task not found' });
     }
 
     await prisma.tasks.delete({ where: { task_id: Number(task_id) } });

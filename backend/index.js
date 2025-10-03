@@ -17,6 +17,6 @@ app.use(json());
 app.use(cookieParser());
 
 //configure routers to redirect to endpoints
-app.use('/tasks', tasksRouter);
+app.use('/api/tasks', tasksRouter);
 
 app.listen(PORT, ()=>console.log(`Server listening on ${PORT}`));

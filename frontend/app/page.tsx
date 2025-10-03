@@ -1,103 +1,231 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Loader2, Calendar, CheckCircle2, Clock, Plus } from "lucide-react";
+import { motion } from "framer-motion";
+import axios from "axios";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface Task {
+  task_id: number;
+  task_title: string;
+  task_description: string;
+  deadline: string;
+  created: string;
+  finished: boolean;
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [open, setOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newDeadline, setNewDeadline] = useState("");
+
+  const fetchTasks = async () => {
+    setLoadingTasks(true);
+    try {
+      const res = await axios.get(`${backendURL}/tasks/${pageNumber}`);
+      if (res.status !== 200) throw new Error("Error fetching tasks");
+      setTasks(res.data.tasks);
+      setTotalTasks(res.data.info.total);
+      setTotalPages(res.data.info.totalPages);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
+
+  const addTask = async () => {
+    if (!newTitle || !newDeadline) {
+      toast.error("Title and Deadline are required");
+      return;
+    }
+
+    try {
+      await axios.post(`${backendURL}/tasks`, {
+        task_title: newTitle,
+        task_description: newDescription,
+        deadline: newDeadline,
+      });
+      toast.success("Task added successfully!");
+      setOpen(false);
+      setNewTitle("");
+      setNewDescription("");
+      setNewDeadline("");
+      fetchTasks();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [pageNumber]);
+
+  if (loadingTasks) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Loader2 className="h-10 w-10 animate-spin text-white" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 backdrop-blur-2xl p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500"
+        >
+          My Tasks
+        </motion.h1>
+
+        {/* Add Task Button */}
+        <div className="flex justify-center">
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Add Task
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Add New Task</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-2">
+                <div>
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Task title"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Task description"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="deadline">Deadline</Label>
+                  <Input
+                    type="date"
+                    id="deadline"
+                    value={newDeadline}
+                    onChange={(e) => setNewDeadline(e.target.value)}
+                  />
+                </div>
+                <Button className="w-full mt-2" onClick={addTask}>
+                  Add Task
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Task stats */}
+        <p className="text-center text-gray-400">
+          Showing page {pageNumber + 1} of {totalPages == 0 ? totalPages + 1 : totalPages} — Total tasks: {totalTasks}
+        </p>
+
+        {tasks.length === 0 ? (
+          <p className="text-center text-gray-300">No tasks found 🎉</p>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2">
+            {tasks.map((task, idx) => (
+              <motion.div
+                key={task.task_id}
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 rounded-2xl">
+                  <CardHeader>
+                    <CardTitle className="flex justify-between items-center">
+                      <span className="text-lg text-white">{task.task_title}</span>
+                      {task.finished ? (
+                        <Badge className="bg-green-500/20 text-green-400 flex items-center gap-1">
+                          <CheckCircle2 className="h-4 w-4" /> Done
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-yellow-500/20 text-yellow-400 flex items-center gap-1">
+                          <Clock className="h-4 w-4" /> Pending
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-gray-200 text-sm">{task.task_description}</p>
+                    <div className="flex items-center gap-2 text-gray-400 text-sm">
+                      <Calendar className="h-4 w-4" />
+                      {new Date(task.deadline).toLocaleDateString()}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={task.finished ? "secondary" : "default"}
+                      className="w-full rounded-xl"
+                    >
+                      {task.finished ? "View" : "Mark as Done"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-4 mt-6">
+            <Button
+              disabled={pageNumber === 0}
+              onClick={() => setPageNumber((p) => Math.max(0, p - 1))}
+              variant="outline"
+            >
+              Previous
+            </Button>
+            <Button
+              disabled={pageNumber === totalPages - 1}
+              onClick={() => setPageNumber((p) => Math.min(totalPages - 1, p + 1))}
+              variant="outline"
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
