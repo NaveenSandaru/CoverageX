@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 
 //import endpoint routers
-import userRouter from './routes/user-routes.js';
 import tasksRouter from './routes/tasks-routes.js';
 
 dotenv.config();
@@ -18,7 +17,6 @@ app.use(json());
 app.use(cookieParser());
 
 //configure routers to redirect to endpoints
-app.use('/users', userRouter);
 app.use('/tasks', tasksRouter);
 
 app.listen(PORT, ()=>console.log(`Server listening on ${PORT}`));

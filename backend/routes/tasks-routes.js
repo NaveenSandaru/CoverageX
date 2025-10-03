@@ -1,6 +1,5 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from './../middleware/authentication.js';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -17,20 +16,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/my-tasks', authenticateToken, async (req, res) => {
-  try {
-    const tasks = await prisma.tasks.findMany({
-      where: { user_id: req.user.user_id },
-      orderBy: { deadline: 'asc' },
-    });
-    res.json(tasks);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { task_title, task_description, deadline } = req.body;
 
@@ -54,7 +40,7 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/:task_id', authenticateToken, async (req, res) => {
+router.put('/:task_id', async (req, res) => {
   try {
     const { task_id } = req.params;
     const { task_title, task_description, deadline, finished } = req.body;
@@ -81,7 +67,7 @@ router.put('/:task_id', authenticateToken, async (req, res) => {
   }
 });
 
-router.delete('/:task_id', authenticateToken, async (req, res) => {
+router.delete('/:task_id', async (req, res) => {
   try {
     const { task_id } = req.params;
 
