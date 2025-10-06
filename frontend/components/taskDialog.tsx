@@ -76,6 +76,7 @@ export default function TaskModal({ open, onClose, onSubmit, selectedTask }: Pro
             description: "Deadline is marked as today",
           });
           const today = new Date();
+          today.setHours(0,0,0,0);
           setDeadline(today.toISOString());
           taskData = { ...taskData, deadline: today.toISOString() };
         }
@@ -173,18 +174,9 @@ export default function TaskModal({ open, onClose, onSubmit, selectedTask }: Pro
                     type="date"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]} 
                     className="bg-white/20 border-white/30 text-white focus-visible:ring-white/0"
                   />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="finished"
-                    checked={finished}
-                    onCheckedChange={(v: any) => setFinished(!!v)}
-                    className="data-[state=checked]:bg-white/90 data-[state=checked]:border-white"
-                  />
-                  <Label htmlFor="finished" className="text-white/90">Mark as finished</Label>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">

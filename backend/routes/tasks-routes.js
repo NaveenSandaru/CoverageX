@@ -19,6 +19,8 @@ router.get('/:page(\\d+)', async (req, res) => {
     const page = Number(req.params.page) || 0;
     const pageSize = 5;
 
+    const count = await prisma.tasks.count({where: {finished: false}});
+
     const tasks = await prisma.tasks.findMany({
       skip: page * pageSize,
       take: pageSize,
@@ -29,15 +31,13 @@ router.get('/:page(\\d+)', async (req, res) => {
       where: {finished: false}
     });
 
-    const totalTasks = tasks.length;
-
     res.json({
       tasks,
       info: {
-        total: totalTasks,
+        total: count,
         page,
         pageSize,
-        totalPages: Math.ceil(totalTasks / pageSize),
+        totalPages: Math.ceil(count / pageSize),
       },
     });
   } catch (err) {

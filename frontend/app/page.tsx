@@ -1,29 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Loader2,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Edit3,
-  Trash2,
-  PlusCircle,
-} from "lucide-react";
+import { Loader2, Calendar, CheckCircle2, Clock, Edit3, Trash2, PlusCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "sonner";
 import TaskDialog from "@/components/taskDialog";
 import DeleteConfirmationDialog from "@/components/deleteConfirmationDialog";
-
 
 interface Task {
   task_id: number;
@@ -63,6 +49,7 @@ export default function Home() {
       await axios.delete(`${backendURL}/tasks/${deletingTaskId}`);
       toast.success("Task deleted");
       fetchTasks();
+      fetchFinishedTasks();
     } catch {
       toast.error("Failed to delete task");
     } finally {
@@ -89,7 +76,7 @@ export default function Home() {
 
   const fetchFinishedTasks = async () => {
     try {
-      const res = await axios.get(`${backendURL}/tasks/finished`,{
+      const res = await axios.get(`${backendURL}/tasks/finished`, {
         headers: { "Cache-Control": "no-cache" },
       });
       if (res.status == 500) {
@@ -144,9 +131,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-2xl p-6">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex flex-col items-center space-y-4">
-          {/* Logo + Title */}
+          {/* Logo and Title */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -192,7 +179,7 @@ export default function Home() {
 
         {/* Task stats */}
         <p className="text-center text-gray-400">
-          Showing page {pageNumber + 1} of{" "}
+          Page {pageNumber + 1} of{" "}
           {totalPages === 0 ? totalPages + 1 : totalPages} — Total tasks:{" "}
           {totalTasks}
         </p>
@@ -210,7 +197,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="w-full max-w-2xl" // ensures cards are not too wide
+                className="w-full max-w-2xl"
               >
                 <Card
                   className={`bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 rounded-2xl ${task.finished ? "opacity-70" : ""
@@ -238,7 +225,7 @@ export default function Home() {
                   </CardHeader>
 
                   <CardContent className="flex justify-between items-center">
-                    {/* Left: Task info */}
+                    {/* Task info */}
                     <div className="space-y-2">
                       <p
                         className={`text-sm ${task.finished ? "line-through text-gray-400" : "text-gray-200"
@@ -253,7 +240,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Right: Action buttons */}
+                    {/* Action buttons */}
                     <div className="flex items-center gap-2">
                       {!task.finished && (
                         <Button
@@ -316,7 +303,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* Collapsible Sidebar */}
+      {/* Sidebar */}
       <motion.div
         initial={{ x: -300, opacity: 0 }}
         animate={{
@@ -340,17 +327,28 @@ export default function Home() {
         </div>
 
         {/* Finished task list */}
-        <div className="flex-1 overflow-y-auto space-y-2">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
           {finishedTasks.length === 0 ? (
             <p className="text-gray-400 text-sm italic">No finished tasks yet 🎯</p>
           ) : (
             finishedTasks.slice(0, visibleFinishedCount).map((task) => (
               <Card
                 key={task.task_id}
-                className="bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all cursor-default"
+                className="relative bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all cursor-default"
               >
-                <CardContent className="p-3 flex flex-col">
-                  <span className="text-white text-sm">{task.task_title}</span>
+                {/* Trash button */}
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="absolute top-2 right-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-400/20 cursor-pointer z-10"
+                  onClick={() => confirmDelete(task.task_id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+
+                <CardContent className="p-4 flex flex-col space-y-1">
+                  <span className="text-white text-sm font-medium">{task.task_title}</span>
+                  <span className="text-white text-sm">{task.task_description}</span>
                   <span className="text-gray-400 text-xs mt-1">
                     {new Date(task.deadline).toLocaleDateString()}
                   </span>
@@ -380,7 +378,7 @@ export default function Home() {
       <button
         title="Finished Tasks"
         onClick={() => setShowSidebar((prev) => !prev)}
-        className={`cursor-pointer fixed top-1/2 left-6 -translate-y-1/2 z-50 bg-white/10 border border-white/20 backdrop-blur-xl text-white p-3 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 ${showSidebar ? "rotate-180" : ""}`}
+        className={`cursor-pointer fixed top-1/2 left-6 -translate-y-1/2 z-50 bg-white/10 border border-white/20 backdrop-blur-xl text-white p-3 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 ${showSidebar ? "translate-x-[-100px]" : "translate-x-0"}`}
       >
         {showSidebar ? (
           <span className="flex items-center justify-center">
