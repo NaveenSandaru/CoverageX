@@ -1,5 +1,5 @@
 {
-  "name": "daycraft",
+  "name": "planora",
   "version": "1.0.0",
   "type": "module",
   "main": "index.js",
@@ -7,8 +7,8 @@
     "dev": "nodemon .",
     "start": "node ."
   },
-  "description": "Day Craft task and booking management app",
-  "keywords": ["task", "booking", "management", "daycraft"],
+  "description": "Planora task and booking management app",
+  "keywords": ["task", "booking", "management", "planora"],
   "author": "",
   "license": "ISC",
   "dependencies": {

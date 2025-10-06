@@ -9,19 +9,21 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, CheckCircle2, Clock, Plus } from "lucide-react";
+import {
+  Loader2,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Edit3,
+  Trash2,
+  PlusCircle,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import TaskDialog from "@/components/taskDialog";
+import DeleteConfirmationDialog from "@/components/deleteConfirmationDialog";
+
 
 interface Task {
   task_id: number;
@@ -40,10 +42,32 @@ export default function Home() {
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  const [open, setOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newDeadline, setNewDeadline] = useState("");
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task>();
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDelete = (id: number) => {
+    setDeletingTaskId(id);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleDeleteTask = async () => {
+    if (!deletingTaskId) return;
+    setDeleting(true);
+    try {
+      await axios.delete(`${backendURL}/tasks/${deletingTaskId}`);
+      toast.success("Task deleted");
+      fetchTasks();
+    } catch {
+      toast.error("Failed to delete task");
+    } finally {
+      setDeleting(false);
+      setOpenDeleteDialog(false);
+      setDeletingTaskId(null);
+    }
+  };
 
   const fetchTasks = async () => {
     setLoadingTasks(true);
@@ -60,32 +84,31 @@ export default function Home() {
     }
   };
 
-  const addTask = async () => {
-    if (!newTitle || !newDeadline) {
-      toast.error("Title and Deadline are required");
-      return;
-    }
-
-    try {
-      await axios.post(`${backendURL}/tasks`, {
-        task_title: newTitle,
-        task_description: newDescription,
-        deadline: newDeadline,
-      });
-      toast.success("Task added successfully!");
-      setOpen(false);
-      setNewTitle("");
-      setNewDescription("");
-      setNewDeadline("");
-      fetchTasks();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
-
   useEffect(() => {
     fetchTasks();
   }, [pageNumber]);
+
+  const handleDialogOpen = () => {
+    setOpenDialog(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task);
+    setOpenDialog(true);
+  };
+
+  const handleToggleFinish = async (task: Task) => {
+    try {
+      await axios.put(`${backendURL}/tasks/${task.task_id}`, {
+        ...task,
+        finished: !task.finished,
+      });
+      toast.success(task.finished ? "Marked as pending" : "Marked as finished");
+      fetchTasks();
+    } catch {
+      toast.error("Failed to update status");
+    }
+  };
 
   if (loadingTasks) {
     return (
@@ -96,72 +119,66 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 backdrop-blur-2xl p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500"
-        >
-          My Tasks
-        </motion.h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 backdrop-blur-2xl p-6">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col items-center space-y-4">
+          {/* Logo + Title */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col items-center"
+          >
+            <img
+              src="/logo.png"
+              alt="Planora Logo"
+              className="h-20 w-20 mb-2 object-contain drop-shadow-lg"
+            />
+            <h1 className="text-5xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 drop-shadow-lg">
+              Planora
+            </h1>
+          </motion.div>
 
-        {/* Add Task Button */}
-        <div className="flex justify-center">
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Add Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Add New Task</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-2">
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="Task title"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Input
-                    id="description"
-                    value={newDescription}
-                    onChange={(e) => setNewDescription(e.target.value)}
-                    placeholder="Task description"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="deadline">Deadline</Label>
-                  <Input
-                    type="date"
-                    id="deadline"
-                    value={newDeadline}
-                    onChange={(e) => setNewDeadline(e.target.value)}
-                  />
-                </div>
-                <Button className="w-full mt-2" onClick={addTask}>
-                  Add Task
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {/* Subtitle */}
+          <motion.h3
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-2xl font-semibold text-center text-gray-300"
+          >
+            My Tasks
+          </motion.h3>
+
+          {/* Add Task Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Button
+              onClick={handleDialogOpen}
+              className="bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 rounded-2xl shadow-lg flex items-center gap-2 px-5 py-2 cursor-pointer transition-all duration-300"
+            >
+              <PlusCircle className="h-5 w-5" />
+              Add Task
+            </Button>
+          </motion.div>
         </div>
+
 
         {/* Task stats */}
         <p className="text-center text-gray-400">
-          Showing page {pageNumber + 1} of {totalPages == 0 ? totalPages + 1 : totalPages} — Total tasks: {totalTasks}
+          Showing page {pageNumber + 1} of{" "}
+          {totalPages === 0 ? totalPages + 1 : totalPages} — Total tasks:{" "}
+          {totalTasks}
         </p>
 
+        {/* Task list */}
         {tasks.length === 0 ? (
-          <p className="text-center text-gray-300">No tasks found 🎉</p>
+          <p className="text-center text-gray-400 italic">
+            No tasks found 🎉
+          </p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2">
             {tasks.map((task, idx) => (
@@ -170,11 +187,21 @@ export default function Home() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
+                className="w-full max-w-2xl" // ensures cards are not too wide
               >
-                <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-xl hover:shadow-cyan-500/20 transition-all duration-300 rounded-2xl">
+                <Card
+                  className={`bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 rounded-2xl ${task.finished ? "opacity-70" : ""
+                    }`}
+
+                >
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
-                      <span className="text-lg text-white">{task.task_title}</span>
+                      <span
+                        className={`text-lg text-white ${task.finished ? "line-through text-gray-400" : ""
+                          }`}
+                      >
+                        {task.task_title}
+                      </span>
                       {task.finished ? (
                         <Badge className="bg-green-500/20 text-green-400 flex items-center gap-1">
                           <CheckCircle2 className="h-4 w-4" /> Done
@@ -186,33 +213,71 @@ export default function Home() {
                       )}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-gray-200 text-sm">{task.task_description}</p>
-                    <div className="flex items-center gap-2 text-gray-400 text-sm">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(task.deadline).toLocaleDateString()}
+
+                  <CardContent className="flex justify-between items-center">
+                    {/* Left: Task info */}
+                    <div className="space-y-2">
+                      <p
+                        className={`text-sm ${task.finished ? "line-through text-gray-400" : "text-gray-200"
+                          }`}
+                      >
+                        {task.task_description}
+                      </p>
+
+                      <div className={`flex items-center gap-2 text-sm ${task.finished ? "text-gray-400" : "text-gray-400"}`}>
+                        <Calendar className="h-4 w-4" />
+                        {new Date(task.deadline).toLocaleDateString()}
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant={task.finished ? "secondary" : "default"}
-                      className="w-full rounded-xl"
-                    >
-                      {task.finished ? "View" : "Mark as Done"}
-                    </Button>
+
+                    {/* Right: Action buttons */}
+                    <div className="flex items-center gap-2">
+                      {!task.finished && (
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          className="rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 cursor-pointer"
+                          onClick={() => handleEditTask(task)}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                      )}
+
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-400/20 cursor-pointer"
+                        onClick={() => confirmDelete(task.task_id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+
+                      {!task.finished && (
+                        <Button
+                          size="icon"
+                          className="rounded-xl bg-green-500/20 hover:bg-cyan-500/40 text-green-400 border border-cyan-400/20 cursor-pointer"
+                          onClick={() => handleToggleFinish(task)}
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
+
               </motion.div>
             ))}
           </div>
         )}
 
-        {/* Pagination controls */}
+        {/* Page controls */}
         {totalPages > 1 && (
           <div className="flex justify-center gap-4 mt-6">
             <Button
               disabled={pageNumber === 0}
               onClick={() => setPageNumber((p) => Math.max(0, p - 1))}
               variant="outline"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20 cursor-pointer"
             >
               Previous
             </Button>
@@ -220,12 +285,39 @@ export default function Home() {
               disabled={pageNumber === totalPages - 1}
               onClick={() => setPageNumber((p) => Math.min(totalPages - 1, p + 1))}
               variant="outline"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20 cursor-pointer"
             >
               Next
             </Button>
           </div>
         )}
       </div>
+
+      {/* Task Dialog */}
+      {openDialog && (
+        <TaskDialog
+          open={openDialog}
+          onClose={() => {
+            setOpenDialog(false);
+            setSelectedTask(undefined);
+          }}
+          onSubmit={fetchTasks}
+          selectedTask={selectedTask || undefined}
+        />
+      )}
+
+      <DeleteConfirmationDialog
+        open={openDeleteDialog}
+        title="Delete Task"
+        description="Are you sure you want to delete this task? This action cannot be undone."
+        onCancel={() => {
+          setOpenDeleteDialog(false);
+          setDeletingTaskId(null);
+        }}
+        onConfirm={handleDeleteTask}
+        loading={deleting}
+      />
+
     </div>
   );
 }

@@ -25,6 +25,7 @@ router.get('/:page', async (req, res) => {
       skip: page * pageSize,
       take: pageSize,
       orderBy: [
+        {finished: 'asc'},
         { deadline: 'asc' },
         { created: 'asc' }
       ],
