@@ -37,6 +37,7 @@ interface Task {
 export default function Home() {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [finishedTasks, setFinishedTasks] = useState<Task[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(false);
   const [pageNumber, setPageNumber] = useState(0);
   const [totalTasks, setTotalTasks] = useState(0);
@@ -45,6 +46,8 @@ export default function Home() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task>();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [visibleFinishedCount, setVisibleFinishedCount] = useState(5);
   const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -84,6 +87,25 @@ export default function Home() {
     }
   };
 
+  const fetchFinishedTasks = async () => {
+    try {
+      const res = await axios.get(`${backendURL}/tasks/finished`,{
+        headers: { "Cache-Control": "no-cache" },
+      });
+      if (res.status == 500) {
+        throw new Error("Error fetching finished tasks");
+      }
+      setFinishedTasks(res.data.tasks);
+    }
+    catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchFinishedTasks();
+  }, []);
+
   useEffect(() => {
     fetchTasks();
   }, [pageNumber]);
@@ -105,6 +127,7 @@ export default function Home() {
       });
       toast.success(task.finished ? "Marked as pending" : "Marked as finished");
       fetchTasks();
+      fetchFinishedTasks();
     } catch {
       toast.error("Failed to update status");
     }
@@ -292,6 +315,97 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Collapsible Sidebar */}
+      <motion.div
+        initial={{ x: -300, opacity: 0 }}
+        animate={{
+          x: showSidebar ? 0 : -300,
+          opacity: showSidebar ? 1 : 0,
+        }}
+        transition={{ type: "spring", stiffness: 120, damping: 20 }}
+        className="fixed top-0 left-0 h-full w-72 bg-white/10 backdrop-blur-xl border-r border-white/20 shadow-xl z-[60] flex flex-col p-4 space-y-4"
+      >
+        {/* Sidebar Header */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-white">Finished Tasks</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSidebar(false)}
+            className="text-white/60 hover:text-white cursor-pointer"
+          >
+            ✕
+          </Button>
+        </div>
+
+        {/* Finished task list */}
+        <div className="flex-1 overflow-y-auto space-y-2">
+          {finishedTasks.length === 0 ? (
+            <p className="text-gray-400 text-sm italic">No finished tasks yet 🎯</p>
+          ) : (
+            finishedTasks.slice(0, visibleFinishedCount).map((task) => (
+              <Card
+                key={task.task_id}
+                className="bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all cursor-default"
+              >
+                <CardContent className="p-3 flex flex-col">
+                  <span className="text-white text-sm">{task.task_title}</span>
+                  <span className="text-gray-400 text-xs mt-1">
+                    {new Date(task.deadline).toLocaleDateString()}
+                  </span>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Show more button */}
+        {visibleFinishedCount < finishedTasks.length && (
+          <Button
+            onClick={() =>
+              setVisibleFinishedCount((prev) =>
+                Math.min(prev + 5, finishedTasks.length)
+              )
+            }
+            variant="outline"
+            className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+          >
+            Show More
+          </Button>
+        )}
+      </motion.div>
+
+      {/* Toggle Button */}
+      <button
+        title="Finished Tasks"
+        onClick={() => setShowSidebar((prev) => !prev)}
+        className={`cursor-pointer fixed top-1/2 left-6 -translate-y-1/2 z-50 bg-white/10 border border-white/20 backdrop-blur-xl text-white p-3 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 ${showSidebar ? "rotate-180" : ""}`}
+      >
+        {showSidebar ? (
+          <span className="flex items-center justify-center">
+            {/* Close Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </span>
+        ) : (
+          <span className="flex items-center justify-center">
+            <CheckCircle2 className="h-6 w-6" />
+          </span>
+        )}
+      </button>
 
       {/* Task Dialog */}
       {openDialog && (

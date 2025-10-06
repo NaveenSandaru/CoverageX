@@ -52,30 +52,47 @@ export default function TaskModal({ open, onClose, onSubmit, selectedTask }: Pro
   // Handle saving task
   const handleSave = async () => {
     if (!taskTitle.trim()) {
-      toast.error("Task title is required")
-      return
+      toast.error("Task title is required");
+      return;
     }
 
-    setIsSaving(true)
+    setIsSaving(true);
+
     try {
-      const taskData = { task_title: taskTitle, task_description: taskDescription, deadline, finished }
+      // Use a mutable variable so we can modify deadline if needed
+      let taskData = {
+        task_title: taskTitle,
+        task_description: taskDescription,
+        deadline,
+        finished
+      };
 
       if (selectedTask) {
-        await axios.put(`${backendURL}/tasks/${selectedTask.task_id}`, taskData)
-        toast.success("Task updated successfully")
+        await axios.put(`${backendURL}/tasks/${selectedTask.task_id}`, taskData);
+        toast.success("Task updated successfully");
       } else {
-        await axios.post(`${backendURL}/tasks`, taskData)
-        toast.success("Task added successfully")
+        if (!taskData.deadline) {
+          toast.info("No deadline selected", {
+            description: "Deadline is marked as today",
+          });
+          const today = new Date();
+          setDeadline(today.toISOString());
+          taskData = { ...taskData, deadline: today.toISOString() };
+        }
+
+        await axios.post(`${backendURL}/tasks`, taskData);
+        toast.success("Task added successfully");
       }
 
-      onSubmit()
-      onClose()
+      onSubmit();
+      onClose();
     } catch (err) {
-      toast.error(selectedTask ? "Failed to update task" : "Failed to add task")
+      toast.error(selectedTask ? "Failed to update task" : "Failed to add task");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
+
 
   // Close on ESC key
   const handleKeyDown = useCallback(

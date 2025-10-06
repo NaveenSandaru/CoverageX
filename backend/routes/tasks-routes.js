@@ -14,22 +14,22 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:page', async (req, res) => {
+router.get('/:page(\\d+)', async (req, res) => {
   try {
     const page = Number(req.params.page) || 0;
     const pageSize = 5;
-
-    const totalTasks = await prisma.tasks.count();
 
     const tasks = await prisma.tasks.findMany({
       skip: page * pageSize,
       take: pageSize,
       orderBy: [
-        {finished: 'asc'},
         { deadline: 'asc' },
         { created: 'asc' }
       ],
+      where: {finished: false}
     });
+
+    const totalTasks = tasks.length;
 
     res.json({
       tasks,
@@ -41,6 +41,26 @@ router.get('/:page', async (req, res) => {
       },
     });
   } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get('/finished', async (req, res) => {
+  try{
+    const finishedTasks = await prisma.tasks.findMany({
+      orderBy: [
+        { deadline: 'asc' },
+        { created: 'asc' }
+      ],
+      where: {finished: true}
+    });
+    res.json({
+      count: finishedTasks.length,
+      tasks: finishedTasks
+    });
+  }
+  catch(err){
     console.error(err);
     res.status(500).json({ message: "Internal server error" });
   }
