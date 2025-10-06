@@ -200,15 +200,13 @@ export default function Home() {
                 className="w-full max-w-2xl"
               >
                 <Card
-                  className={`bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 rounded-2xl ${task.finished ? "opacity-70" : ""
-                    }`}
+                  className={`bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 rounded-2xl ${task.finished ? "opacity-70" : ""}`}
 
                 >
                   <CardHeader>
                     <CardTitle className="flex justify-between items-center">
                       <span
-                        className={`text-lg text-white ${task.finished ? "line-through text-gray-400" : ""
-                          }`}
+                        className={`text-lg text-white ${task.finished ? "line-through text-gray-400" : ""}`}
                       >
                         {task.task_title}
                       </span>
@@ -228,8 +226,7 @@ export default function Home() {
                     {/* Task info */}
                     <div className="space-y-2">
                       <p
-                        className={`text-sm ${task.finished ? "line-through text-gray-400" : "text-gray-200"
-                          }`}
+                        className={`text-sm ${task.finished ? "line-through text-gray-400" : "text-gray-200"}`}
                       >
                         {task.task_description}
                       </p>
@@ -336,7 +333,7 @@ export default function Home() {
                 key={task.task_id}
                 className="relative bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all cursor-default"
               >
-                {/* Trash button */}
+                {/* Delete button */}
                 <Button
                   size="icon"
                   variant="destructive"
@@ -378,31 +375,11 @@ export default function Home() {
       <button
         title="Finished Tasks"
         onClick={() => setShowSidebar((prev) => !prev)}
-        className={`cursor-pointer fixed top-1/2 left-6 -translate-y-1/2 z-50 bg-white/10 border border-white/20 backdrop-blur-xl text-white p-3 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 ${showSidebar ? "translate-x-[-100px]" : "translate-x-0"}`}
+        className={`cursor-pointer fixed top-1/2 left-6 bg-white/10 border border-white/20 backdrop-blur-xl text-white p-3 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300 ${showSidebar ? "translate-x-[-100px]" : "translate-x-0"}`}
       >
-        {showSidebar ? (
-          <span className="flex items-center justify-center">
-            {/* Close Icon */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </span>
-        ) : (
-          <span className="flex items-center justify-center">
-            <CheckCircle2 className="h-6 w-6" />
-          </span>
-        )}
+        <span className="flex items-center justify-center">
+          <CheckCircle2 className="h-6 w-6" />
+        </span>
       </button>
 
       {/* Task Dialog */}

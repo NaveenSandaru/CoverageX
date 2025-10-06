@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import axios from "axios"
@@ -59,7 +58,6 @@ export default function TaskModal({ open, onClose, onSubmit, selectedTask }: Pro
     setIsSaving(true);
 
     try {
-      // Use a mutable variable so we can modify deadline if needed
       let taskData = {
         task_title: taskTitle,
         task_description: taskDescription,
@@ -106,7 +104,7 @@ export default function TaskModal({ open, onClose, onSubmit, selectedTask }: Pro
   useEffect(() => {
     if (open) {
       document.addEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = 'hidden' // block background scroll
+      document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
     }
@@ -126,7 +124,7 @@ export default function TaskModal({ open, onClose, onSubmit, selectedTask }: Pro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose} // close on backdrop click
+          onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -134,9 +132,8 @@ export default function TaskModal({ open, onClose, onSubmit, selectedTask }: Pro
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 180, damping: 16 }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-3xl overflow-hidden bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.2)]"
-            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Frosted gradient background */}
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/10 to-transparent opacity-70 pointer-events-none" />
 
             <div className="relative p-6 text-white">

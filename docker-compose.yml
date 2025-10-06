@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: planora-backend
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: 'postgresql://neondb_owner:npg_6CDpmsSwVJ0t@ep-shy-boat-a1pa4w5p-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+      ACCESS_TOKEN_KEY: asherghnEHSARskednbgn902tnmansehgffiffffknsaetgftdsshgjxgjsjdff
+      REFRESH_TOKEN_KEY: ghdgfffnffaseflashewupo008323msadgggggjmnsbdffserh823mdgggggggkj
+    networks:
+      - planora-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: planora-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: "http://backend:5000/api"
+    networks:
+      - planora-network
+
+networks:
+  planora-network:
+    driver: bridge

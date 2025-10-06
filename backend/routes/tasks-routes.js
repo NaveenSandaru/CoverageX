@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const router = express.Router();
 
+//Get all tasks for admin purposes
 router.get('/', async (req, res) => {
   try {
     const tasks = await prisma.tasks.findMany();
@@ -14,6 +15,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+//Get tasks according to page number
 router.get('/:page(\\d+)', async (req, res) => {
   try {
     const page = Number(req.params.page) || 0;
@@ -46,6 +48,7 @@ router.get('/:page(\\d+)', async (req, res) => {
   }
 });
 
+//Get finished tasks
 router.get('/finished', async (req, res) => {
   try{
     const finishedTasks = await prisma.tasks.findMany({
@@ -66,6 +69,7 @@ router.get('/finished', async (req, res) => {
   }
 });
 
+//Create new task
 router.post('/', async (req, res) => {
   try {
     const { task_title, task_description, deadline } = req.body;
@@ -89,6 +93,7 @@ router.post('/', async (req, res) => {
   }
 });
 
+//Update a task
 router.put('/:task_id', async (req, res) => {
   try {
     const { task_id } = req.params;
@@ -116,6 +121,7 @@ router.put('/:task_id', async (req, res) => {
   }
 });
 
+//Delete a task
 router.delete('/:task_id', async (req, res) => {
   try {
     const { task_id } = req.params;
