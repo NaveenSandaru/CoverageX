@@ -8,7 +8,12 @@
     "start": "node ."
   },
   "description": "Planora task and booking management app",
-  "keywords": ["task", "booking", "management", "planora"],
+  "keywords": [
+    "task",
+    "booking",
+    "management",
+    "planora"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -23,7 +28,12 @@
     "pg": "^8.13.1"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^6.0.3",
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.9",
-    "prisma": "^6.7.0"
+    "prisma": "^6.7.0",
+    "supertest": "^7.1.4"
   }
 }
