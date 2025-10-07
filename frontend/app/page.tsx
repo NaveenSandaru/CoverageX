@@ -326,7 +326,7 @@ export default function Home() {
         {/* Finished task list */}
         <div className="flex-1 overflow-y-auto space-y-2 pr-2">
           {finishedTasks.length === 0 ? (
-            <p className="text-gray-400 text-sm italic">No finished tasks yet 🎯</p>
+            <p className="text-gray-400 text-sm italic">No finished tasks yet</p>
           ) : (
             finishedTasks.slice(0, visibleFinishedCount).map((task) => (
               <Card
