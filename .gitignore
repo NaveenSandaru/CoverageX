@@ -1,6 +1,6 @@
+#/frontend/.env
 /frontend/.next
-/frontend/.env
 /frontend/node_modules
 
-/backend/.env
+#/backend/.env
 /backend/node_modules
