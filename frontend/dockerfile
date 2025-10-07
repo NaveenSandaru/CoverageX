@@ -1,13 +1,48 @@
-FROM node:20-alpine AS builder
+# ---------- Build Stage ----------
+FROM node:20-bullseye AS builder
 WORKDIR /app
+
+# Copy dependency files first for better caching
 COPY package*.json ./
-RUN npm install
+
+# Use a reliable npm mirror and disable telemetry
+RUN npm config set registry https://registry.npmmirror.com \
+    && npm config set fund false \
+    && npm config set audit false
+
+# Install all dependencies
+RUN npm ci
+RUN npm rebuild lightningcss
+
+# Copy the rest of the project
 COPY . .
+
+# Skip linting / telemetry for production builds
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Pass backend URL as build argument so NEXT_PUBLIC_* is embedded
+ARG NEXT_PUBLIC_BACKEND_URL
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+
+# Build Next.js app
 RUN npm run build
-FROM node:20-alpine
+
+# ---------- Runtime Stage ----------
+FROM node:20-bullseye AS runner
 WORKDIR /app
-COPY --from=builder /app ./
-RUN npm install --production
+
+# Copy only necessary files for runtime
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.* ./
+COPY --from=builder /app/node_modules ./node_modules
+
+# Set production environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
 EXPOSE 3000
 
 CMD ["npm", "start"]
